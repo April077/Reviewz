@@ -1,6 +1,10 @@
 import { Queue } from "bullmq";
 import { redis } from "./redis";
 
-export const reviewQueue = new Queue("reviews", {
+export const sentimentQueue = new Queue("reviews", {
+  connection: redis,
+});
+
+export const emailQueue = new Queue("emails", {
   connection: redis,
 });

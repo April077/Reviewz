@@ -2,6 +2,7 @@ import { Worker } from "bullmq";
 import { prisma } from "./prisma";
 import { redis } from "./redis";
 import { analyzeSentiment, extractTags } from "./ai";
+import { emailQueue } from "./queue";
 
 // Define the job data type
 interface ReviewJobData {
@@ -31,6 +32,27 @@ const worker = new Worker<ReviewJobData>(
       console.log(`🏷️ Tags extracted: ${tags.join(", ")}`);
     }
 
+    if (sentiment?.toLowerCase() === "negative") {
+      const space = await prisma.space.findUnique({
+        where: { id: job.data.spaceId },
+        select: { owner: true },
+      });
+      console.log("Owner info:", space?.owner);
+
+      if (space?.owner.email) {
+        await emailQueue.add(
+          "sendAlert",
+          {
+            to: space.owner.email,
+            subject: "Negative Review Alert",
+            body: `A new negative review was submitted:\n\n`,
+            name: job.data.name,
+          },
+          { attempts: 3, backoff: 10000 } // retry config
+        );
+      }
+    }
+
     const review = await prisma.review.create({
       data: {
         spaceId: job.data.spaceId,
@@ -50,4 +72,6 @@ const worker = new Worker<ReviewJobData>(
 );
 
 worker.on("completed", (job) => console.log(`✅ Job ${job.id} completed`));
-worker.on("failed", (job, err) => console.error(`❌ Job ${job?.id} failed:`, err));
+worker.on("failed", (job, err) =>
+  console.error(`❌ Job ${job?.id} failed:`, err)
+);

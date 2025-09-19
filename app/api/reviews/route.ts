@@ -1,5 +1,5 @@
 // app/api/reviews/route.ts
-import { reviewQueue } from "@/lib/queue";
+import { sentimentQueue } from "@/lib/queue";
 
 export async function POST(req: Request) {
   try {
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
       text,
     });
 
-    const job = await reviewQueue.add("processReview", {
+    const job = await sentimentQueue.add("processReview", {
       spaceId,
       name,
       email,
