@@ -1,8 +1,9 @@
 import { Worker } from "bullmq";
-import { prisma } from "./prisma";
-import { redis } from "./redis";
-import { analyzeSentiment, extractTags } from "./ai";
-import { emailQueue } from "./queue";
+import { prisma } from "../lib/prisma";
+import { redis } from "../lib/redis";
+import { analyzeSentiment, extractTags } from "../lib/ai";
+import { emailQueue } from "../lib/queue";
+
 
 // Define the job data type
 interface ReviewJobData {
