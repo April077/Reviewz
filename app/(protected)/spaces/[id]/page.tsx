@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import axios from "axios";
 import Link from "next/link";
 import { Copy } from "lucide-react";
 import FilterBar from "@/app/components/FilterBar";
-
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 
 export interface Review {
   id: string;
@@ -19,10 +19,9 @@ export interface Review {
   sentiment?: "positive" | "negative" | "neutral" | null;
   sentimentScore?: number | null;
   tags?: string[] | null;
-  createdAt: string; 
+  createdAt: string;
   updatedAt: string;
 }
-
 
 interface Space {
   id: string;
@@ -37,27 +36,26 @@ interface SpaceResponse {
 export default function SpaceDetailsPage() {
   const params = useParams();
   const spaceId = params?.id as string | undefined;
-  const [space, setSpace] = useState<Space | null>(null);
-  const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [filteredReviews, setFilteredReviews] = useState<Review[]>([]);
 
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["space", spaceId],
+    queryFn: async () => {
+      const res = await axios.get<SpaceResponse>(`/api/spaces/${spaceId}`);
+      return res.data.space;
+    },
+    enabled: !!spaceId, // don't run until we have an id
+    staleTime: 1000 * 60 * 5, // cache fresh for 5 minutes
+    refetchOnWindowFocus: false,
+  });
+
+  const space = data ?? null;
+
+  // update filtered reviews whenever space changes
   useEffect(() => {
-    if (!spaceId) return;
-    const fetchSpace = async () => {
-      try {
-        const res = await axios.get<SpaceResponse>(`/api/spaces/${spaceId}`);
-        setSpace(res.data.space);
-        console.log("Fetched space details:", res.data.space);
-        setFilteredReviews(res.data.space.reviews);
-      } catch (err) {
-        console.error("Error fetching space details:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSpace();
-  }, [spaceId]);
+    if (space) setFilteredReviews(space.reviews);
+  }, [space]);
 
   const handleFilter = ({
     sentiment,
@@ -74,7 +72,6 @@ export default function SpaceDetailsPage() {
     if (tag) {
       filtered = filtered.filter((r) => r.tags?.includes(tag));
     }
-
     setFilteredReviews(filtered);
   };
 
@@ -86,14 +83,14 @@ export default function SpaceDetailsPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (loading)
+  if (isLoading)
     return (
       <p className="text-center mt-12 text-gray-600 text-lg font-medium">
         Loading space details...
       </p>
     );
 
-  if (!space)
+  if (isError || !space)
     return (
       <p className="text-center mt-12 text-gray-600 text-lg font-medium">
         Space not found.
@@ -169,7 +166,6 @@ export default function SpaceDetailsPage() {
                     </h3>
                     <p className="text-sm text-gray-500">{review.email}</p>
                   </div>
-                  {/* Sentiment Badge */}
                   <span
                     className={`px-3 py-1 text-xs font-medium rounded-full ${sentimentColor}`}
                   >
@@ -177,7 +173,7 @@ export default function SpaceDetailsPage() {
                   </span>
                 </div>
 
-                {/* Rating as stars */}
+                {/* Rating */}
                 <div className="flex items-center mb-3">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <span
@@ -191,14 +187,12 @@ export default function SpaceDetailsPage() {
                   ))}
                 </div>
 
-                {/* Text Review */}
                 {review.text && (
                   <p className="text-gray-700 mb-3 italic leading-relaxed">
                     “{review.text}”
                   </p>
                 )}
 
-                {/* Tags */}
                 {review.tags && review.tags.length > 0 && (
                   <div className="flex gap-2 flex-wrap mt-2">
                     {review.tags.map((tag, i) => (

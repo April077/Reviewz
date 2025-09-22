@@ -48,8 +48,8 @@ Please log in to your dashboard to review further.
 );
 
 emailWorker.on("completed", (job) =>
-  console.log(`✅ Email job ${job.id} completed`)
+  console.log(`Email job ${job.id} completed`)
 );
 emailWorker.on("failed", (job, err) =>
-  console.error(`❌ Email job ${job?.id} failed:`, err)
+  console.error(`Email job ${job?.id} failed:`, err)
 );

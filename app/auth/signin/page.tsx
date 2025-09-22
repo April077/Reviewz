@@ -18,6 +18,7 @@ export default function SignInPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+
     try {
       const res = await signIn("credentials", {
         redirect: false,
@@ -26,9 +27,9 @@ export default function SignInPage() {
       });
 
       if (res?.error) {
-        setError("Invalid email or password");
-      } else {
-        router.push("/spaces"); // ✅ redirect only if success
+        setError(res.error || "Invalid email or password");
+      } else if (res?.ok) {
+        router.push("/spaces"); // redirect only if successful
       }
     } catch (err) {
       setError("Something went wrong. Please try again.");
@@ -55,28 +56,41 @@ export default function SignInPage() {
           onSubmit={handleSubmit}
           className="flex text-black flex-col space-y-4"
         >
-          <input
-            type="email"
-            placeholder="Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="border border-gray-300 rounded-lg p-3 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
-          />
+          <div>
+            <label htmlFor="email" className="sr-only">
+              Email Address
+            </label>
+            <input
+              id="email"
+              type="email"
+              placeholder="Email Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              suppressHydrationWarning
+              className="border border-gray-300 rounded-lg p-3 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition w-full"
+            />
+          </div>
 
           <div className="relative">
+            <label htmlFor="password" className="sr-only">
+              Password
+            </label>
             <input
+              id="password"
               type={showPassword ? "text" : "password"}
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              suppressHydrationWarning
               className="border border-gray-300 rounded-lg p-3 w-full pr-10 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
             />
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
+              onClick={() => setShowPassword((prev) => !prev)}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? (
                 <AiOutlineEyeInvisible size={20} />
@@ -96,7 +110,7 @@ export default function SignInPage() {
         </form>
 
         <p className="text-center text-gray-500">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <a href="/auth/signup" className="text-indigo-600 hover:underline">
             Sign Up
           </a>
