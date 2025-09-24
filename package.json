@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "worker1": "tsx lib/worker.ts",
-    "worker2": "tsx lib/emailWorker.ts",
+    "start: worker": "tsx workers/index.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
