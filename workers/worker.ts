@@ -4,7 +4,6 @@ import { redis } from "../lib/redis";
 import { analyzeSentiment, extractTags } from "../lib/ai";
 import { emailQueue } from "../lib/queue";
 
-
 // Define the job data type
 interface ReviewJobData {
   spaceId: string;
@@ -14,10 +13,10 @@ interface ReviewJobData {
   text?: string;
 }
 
-const worker = new Worker<ReviewJobData>(
+const reviewWorker = new Worker<ReviewJobData>(
   "reviews",
   async (job) => {
-    console.log(`🚀 Processing job ${job.id}`, job.data);
+    console.log(`🚀 Processing review job ${job.id}`, job.data);
 
     let sentiment: string | null = null;
     let sentimentScore: number | null = null;
@@ -33,27 +32,7 @@ const worker = new Worker<ReviewJobData>(
       console.log(`🏷️ Tags extracted: ${tags.join(", ")}`);
     }
 
-    if (sentiment?.toLowerCase() === "negative") {
-      const space = await prisma.space.findUnique({
-        where: { id: job.data.spaceId },
-        select: { owner: true },
-      });
-      console.log("Owner info:", space?.owner);
-
-      if (space?.owner.email) {
-        await emailQueue.add(
-          "sendAlert",
-          {
-            to: space.owner.email,
-            subject: "Negative Review Alert",
-            body: `A new negative review was submitted:\n\n`,
-            name: job.data.name,
-          },
-          { attempts: 3, backoff: 10000 } // retry config
-        );
-      }
-    }
-
+    // Save review to DB
     const review = await prisma.review.create({
       data: {
         spaceId: job.data.spaceId,
@@ -68,11 +47,40 @@ const worker = new Worker<ReviewJobData>(
     });
 
     console.log(`💾 Review saved: ${review.id}`);
+
+    // Send email alert if negative
+    if (sentiment?.toLowerCase() === "negative") {
+      const space = await prisma.space.findUnique({
+        where: { id: job.data.spaceId },
+        select: { owner: true },
+      });
+
+      if (space?.owner.email) {
+        await emailQueue.add(
+          "sendAlert",
+          {
+            to: space.owner.email,
+            name: job.data.name,
+            subject: "Negative Review Alert",
+            rating: review.rating,
+            text: review.text,
+            sentiment: review.sentiment,
+            tags: review.tags,
+          },
+          { attempts: 3, backoff: 10000 }
+        );
+        console.log(`📧 Email job queued for ${space.owner.email}`);
+      }
+    }
   },
   { connection: redis }
 );
 
-worker.on("completed", (job) => console.log(`✅ Job ${job.id} completed`));
-worker.on("failed", (job, err) =>
-  console.error(`❌ Job ${job?.id} failed:`, err)
+reviewWorker.on("completed", (job) =>
+  console.log(`✅ Review job ${job.id} completed`)
 );
+reviewWorker.on("failed", (job, err) =>
+  console.error(`❌ Review job ${job?.id} failed:`, err)
+);
+
+console.log("📌 Review worker is running...");

@@ -2,6 +2,7 @@
 
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 
@@ -9,7 +10,6 @@ export default function Navbar() {
   const router = useRouter();
   const { data: session, status } = useSession();
 
-  // ✅ Hooks must come before any early returns
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -29,7 +29,7 @@ export default function Navbar() {
   };
 
   if (status === "loading") {
-    return <div className="h-12" />; // placeholder instead of null
+    return <div className="h-12" />; // placeholder while session loads
   }
 
   const userName = session?.user?.name || "User";
@@ -50,13 +50,16 @@ export default function Navbar() {
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-300 hover:border-indigo-600 transition flex items-center justify-center text-white font-semibold bg-indigo-500 text-lg"
+            className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-300 cursor-pointer transition flex items-center justify-center text-white font-semibold bg-indigo-500 text-lg"
           >
             {userImage ? (
-              <img
+              <Image
                 src={userImage}
                 alt={userName}
-                className="w-full h-full object-cover"
+                width={40}
+                height={40}
+                className="rounded-full object-cover"
+                referrerPolicy="no-referrer"
               />
             ) : (
               <span>{userName.charAt(0).toUpperCase()}</span>
@@ -65,12 +68,6 @@ export default function Navbar() {
 
           {userMenuOpen && (
             <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50">
-              <Link
-                href="/profile"
-                className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
-              >
-                Profile
-              </Link>
               <button
                 onClick={handleLogout}
                 className="w-full text-left px-4 py-2 text-gray-700 hover:bg-red-100 transition-colors"

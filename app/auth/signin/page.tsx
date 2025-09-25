@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
+import { FcGoogle } from "react-icons/fc";
 import { useRouter } from "next/navigation";
 
 export default function SignInPage() {
@@ -29,10 +30,19 @@ export default function SignInPage() {
       if (res?.error) {
         setError(res.error || "Invalid email or password");
       } else if (res?.ok) {
-        router.push("/spaces"); // redirect only if successful
+        router.push("/spaces");
       }
     } catch (err) {
       setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      await signIn("google", { callbackUrl: "/spaces" });
     } finally {
       setLoading(false);
     }
@@ -52,6 +62,19 @@ export default function SignInPage() {
           <p className="text-red-600 transition-all text-center">{error}</p>
         )}
 
+        {/* Google Sign In */}
+        <button
+          onClick={handleGoogleSignIn}
+          disabled={loading}
+          className="flex items-center justify-center w-full border border-gray-300 rounded-lg p-3 space-x-2 hover:bg-gray-100 transition"
+        >
+          <FcGoogle size={24} />
+          <span className="text-gray-700 font-medium">Sign in with Google</span>
+        </button>
+
+        <div className="flex items-center justify-center text-gray-400">or</div>
+
+        {/* Credentials Form */}
         <form
           onSubmit={handleSubmit}
           className="flex text-black flex-col space-y-4"

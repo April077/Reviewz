@@ -7,13 +7,8 @@ import {
 import { redis } from "../lib/redis";
 import { join } from "path";
 
-// Load .env
+// Load environment variables
 dotenv.config({ path: join(__dirname, "..", ".env") });
-
-console.log("===== ENV VARIABLES =====");
-console.log("BREVO_API_KEY set?", !!process.env.BREVO_API_KEY);
-console.log("SENDER_EMAIL:", process.env.SENDER_EMAIL);
-console.log("=========================");
 
 // Setup Brevo client
 const brevo = new TransactionalEmailsApi();
@@ -24,15 +19,23 @@ brevo.setApiKey(
 
 console.log("✅ Brevo client configured");
 
-// Initialize email worker
-const emailWorker = new Worker(
+// Job type
+interface EmailJobData {
+  to: string;
+  name?: string;
+  subject: string;
+  rating?: number;
+  text?: string;
+  sentiment?: string;
+  tags?: string[];
+}
+
+const emailWorker = new Worker<EmailJobData>(
   "emails",
   async (job) => {
-    console.log(`\n🚀 Processing email job ${job.id}`);
-    console.log("Job data:", job.data);
+    console.log(`🚀 Processing email job ${job.id}`, job.data);
 
-    const { to, name, subject, email, rating, text, sentiment, tags } =
-      job.data;
+    const { to, name, subject, rating, text, sentiment, tags } = job.data;
 
     if (!to || !subject) {
       console.error("❌ Missing recipient or subject");
@@ -41,7 +44,7 @@ const emailWorker = new Worker(
 
     const sendSmtpEmail = {
       sender: {
-        email: process.env.SENDER_EMAIL || "tanmaymajee18@gmail.com",
+        email: process.env.SENDER_EMAIL || "noreply@example.com",
         name: "Review Alerts",
       },
       to: [{ email: to, name: name || "Owner" }],
@@ -51,7 +54,7 @@ Hello ${name || "Owner"},
 
 A new negative review was submitted for your space.
 
-Reviewer: ${name || "N/A"} (${email || "N/A"})
+Reviewer: ${name || "N/A"} (${text ? "has comment" : "no comment"})
 Rating: ${rating || "N/A"}
 Comment: ${text || "No comment"}
 Sentiment: ${sentiment || "N/A"}
@@ -62,14 +65,11 @@ Please log in to your dashboard to review further.
     };
 
     console.log("📨 Sending email via Brevo...");
-    console.log("Email payload:", sendSmtpEmail);
-
     try {
       const response = await brevo.sendTransacEmail(sendSmtpEmail);
       console.log("✅ Brevo API response:", response);
     } catch (error) {
       console.error("❌ Failed to send email:", error);
-      console.error("Payload was:", sendSmtpEmail);
       throw error;
     }
   },

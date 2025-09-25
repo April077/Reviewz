@@ -25,6 +25,7 @@ export default function ReviewSubmissionPage() {
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false); // ✅ new state
 
   const { register, handleSubmit, reset } = useForm<ReviewForm>();
 
@@ -53,6 +54,7 @@ export default function ReviewSubmissionPage() {
 
   // ✅ Submit review
   const onSubmit = async (data: ReviewForm) => {
+    setSubmitting(true); // start submitting
     try {
       await axios.post("/api/reviews", { ...data, spaceId });
       setSubmitted(true);
@@ -60,6 +62,8 @@ export default function ReviewSubmissionPage() {
     } catch (err) {
       console.error("Error submitting review:", err);
       alert("Failed to submit review. Please try again.");
+    } finally {
+      setSubmitting(false); // stop submitting
     }
   };
 
@@ -116,9 +120,12 @@ export default function ReviewSubmissionPage() {
 
             <button
               type="submit"
-              className="w-full bg-indigo-600 text-white py-2 rounded-lg"
+              disabled={submitting} // disable while submitting
+              className={`w-full py-2 rounded-lg text-white transition ${
+                submitting ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+              }`}
             >
-              Submit Review
+              {submitting ? "Submitting..." : "Submit Review"} {/* show loading text */}
             </button>
           </form>
         </div>

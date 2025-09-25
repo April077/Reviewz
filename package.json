@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "start: worker": "tsx workers/index.ts",
+    "start:worker": "tsx workers/index.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
