@@ -42,7 +42,7 @@ export default function FilterBar({ onFilter }: FilterBarProps) {
             onClick={() => handleSentimentClick(btn.value)}
             className={`px-4 py-1 rounded-full text-sm font-medium transition-colors duration-150 cursor-pointer ${
               sentiment === btn.value
-                ? `bg-${btn.color}-500 text-white`
+                ? `bg-${btn.color}-500 text-black`
                 : `bg-white border border-${btn.color}-400 text-${btn.color}-600 hover:bg-${btn.color}-100`
             }`}
           >

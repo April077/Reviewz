@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import axios from "axios";
 import { useForm } from "react-hook-form";
+import { SkeletonLoader } from "@/components/ui/SkeletonLoader";
+import { SkeletonReviewForm } from "@/components/ReviewLoader";
 
 interface Space {
   id: string;
@@ -67,7 +69,12 @@ export default function ReviewSubmissionPage() {
     }
   };
 
-  if (loading) return <div className="p-6 text-center">Loading...</div>;
+  if (loading)
+    return (
+      <div className="p-6 justify-center flex text-center">
+        <SkeletonReviewForm />
+      </div>
+    );
   if (error)
     return (
       <div className="p-6 text-center text-red-600 font-medium">{error}</div>
@@ -122,10 +129,13 @@ export default function ReviewSubmissionPage() {
               type="submit"
               disabled={submitting} // disable while submitting
               className={`w-full py-2 rounded-lg text-white transition ${
-                submitting ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+                submitting
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-indigo-600 hover:bg-indigo-700"
               }`}
             >
-              {submitting ? "Submitting..." : "Submit Review"} {/* show loading text */}
+              {submitting ? "Submitting..." : "Submit Review"}{" "}
+              {/* show loading text */}
             </button>
           </form>
         </div>

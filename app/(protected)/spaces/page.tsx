@@ -6,6 +6,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { FolderPlus, Trash } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { SkeletonLoader } from "@/components/ui/SkeletonLoader";
 
 interface Space {
   id: string;
@@ -48,7 +49,9 @@ export default function SpacesPage() {
   // ✅ Create space mutation
   const createSpaceMutation = useMutation({
     mutationFn: async (name: string) => {
-      const res = await axios.post<CreateSpaceResponse>("/api/spaces", { name });
+      const res = await axios.post<CreateSpaceResponse>("/api/spaces", {
+        name,
+      });
       return res.data.space;
     },
     onSuccess: (newSpace) => {
@@ -81,7 +84,7 @@ export default function SpacesPage() {
     }
   }, [status, router]);
 
-  if (status === "loading") return <p>Loading...</p>;
+  if (status === "loading") return <SkeletonLoader />;
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 flex flex-col items-center">
@@ -116,7 +119,7 @@ export default function SpacesPage() {
       )}
 
       {isLoading ? (
-        <p className="text-gray-600">Loading your spaces...</p>
+        <SkeletonLoader />
       ) : !spaces || spaces.length === 0 ? (
         <p className="text-gray-600">
           You don’t have any spaces yet. Create your first one above.
@@ -162,7 +165,8 @@ export default function SpacesPage() {
               Are you sure?
             </h3>
             <p className="text-gray-600 mb-6">
-              Do you really want to delete <strong>{confirmDelete.name}</strong>?
+              Do you really want to delete <strong>{confirmDelete.name}</strong>
+              ?
             </p>
             <div className="flex justify-around">
               <button

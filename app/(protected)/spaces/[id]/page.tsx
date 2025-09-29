@@ -7,6 +7,7 @@ import { Copy } from "lucide-react";
 import FilterBar from "@/app/components/FilterBar";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { SkeletonLoader } from "@/components/ui/SkeletonLoader";
 
 export interface Review {
   id: string;
@@ -83,12 +84,7 @@ export default function SpaceDetailsPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (isLoading)
-    return (
-      <p className="text-center mt-12 text-gray-600 text-lg font-medium">
-        Loading space details...
-      </p>
-    );
+  if (isLoading) return <SkeletonLoader />;
 
   if (isError || !space)
     return (

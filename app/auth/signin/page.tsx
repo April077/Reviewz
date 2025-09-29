@@ -14,7 +14,6 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -29,24 +28,27 @@ export default function SignInPage() {
 
       if (res?.error) {
         setError(res.error || "Invalid email or password");
+        setLoading(false); // reset only on error
       } else if (res?.ok) {
         router.push("/spaces");
+        // no setLoading(false) here, stays "Signing In..." until redirect
       }
     } catch (err) {
       setError("Something went wrong. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    try {
-      await signIn("google", { callbackUrl: "/spaces" });
-    } finally {
-      setLoading(false);
-    }
-  };
+const handleGoogleSignIn = async () => {
+  setLoading(true);
+  try {
+    await signIn("google", { callbackUrl: "/spaces" });
+    // Don't reset loading here — the page will redirect anyway
+  } catch (err) {
+    console.error(err);
+    setLoading(false); // only reset if something fails
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-4">
